@@ -15,7 +15,11 @@ agent:
   # Your Buildkite agent token, it must be set
   token: ""
   # Agent tags, which can be used to assign jobs
-  tags: "role=agent"
+  queues:
+    default:
+      replicas: 1
+  tags:
+    role: kubernetes
   externalSecretName: ""
   externalSecretTokenKey: "agent-token"
   externalSecretSSHKey: ""
@@ -141,10 +145,27 @@ podContainers: {}
 # Preconfigured Docker-in-Docker (DinD) container specification
 dind:
   enabled: false
-  image: docker:19.03-dind
+  image: docker:24.0-dind
   port: 2375
   resources: {}
   mtu: 1500
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 500m
+  #  memory: 1024Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+  volumeMounts: {}
+
+dindDaemonSet:
+  enabled: false
+  image: docker:24.0-dind
+  resources: {}
+  mtu: 1450
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
