@@ -35,6 +35,17 @@ Set the Deployment API version based on the version of Kubernetes the chart is b
 {{- end -}}
 
 {{/*
+Set the DaemonSet API version based on the version of Kubernetes the chart is being deployed into.
+*/}}
+{{- define "daemonset.apiVersion" -}}
+{{- if semverCompare "<1.9-0" .Capabilities.KubeVersion.GitVersion -}}
+{{- print "extensions/v1beta1" -}}
+{{- else -}}
+{{- print "apps/v1" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Define Pdb apiVersion
 */}}
 {{- define "pdb.apiVersion" -}}
