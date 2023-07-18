@@ -15,7 +15,7 @@ Get the latest [Helm release](https://github.com/kubernetes/helm#install).
 ### Add Buildkite Helm chart repository:
 
  ```console
- helm repo add buildkite-chendo https://github.com/chendo/buildkite-charts.git
+ helm repo add buildkite-agent-stack https://github.com/chendo/buildkite-agent-stack.git
  helm repo update
  ```
 
@@ -45,4 +45,4 @@ Upon successful review, someone will give the PR a __LGTM__ in the review thread
 
 ## Copyright
 
-Copyright (c) 2020 Buildkite Pty Ltd. See [LICENSE](LICENSE) for details.
+Copyright (c) 2020-2023 Buildkite Pty Ltd, chendo. See [LICENSE](LICENSE) for details.
