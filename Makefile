@@ -1,5 +1,5 @@
-UPSTREAM_GIT_URL = git@github.com:buildkite/charts.git
-CHARTS_URL = https://buildkite.github.io/charts
+UPSTREAM_GIT_URL = git@github.com:chendo/buildkite-agent-stack.git
+CHARTS_URL = https://chendo.github.io/buildkite-agent-stack
 CT_IMAGE = quay.io/helmpack/chart-testing:v3.7.0
 COMMIT = $(shell git rev-parse --short HEAD)
 
