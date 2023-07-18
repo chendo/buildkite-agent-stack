@@ -1,103 +1,162 @@
-apiVersion: {{ template "deployment.apiVersion" . }}
+{{- $root := . }}
+{{- range $queue, $settings := $root.Values.agent.queues }}
+{{- $deploymentName := printf "%s-%s" (include "fullname" $root) $queue }}
+{{- $defaultTags := dict "queue" $queue }}
+{{- $tags := merge (default dict $settings.tags) $defaultTags $root.Values.agent.tags }}
+{{- $tagsString := include "dictToTags" $tags }}
+---
+apiVersion: {{ template "deployment.apiVersion" $root }}
 kind: Deployment
 metadata:
-  name: {{ template "fullname" . }}
+  name: {{ $deploymentName }}
   labels:
-    app: {{ template "fullname" . }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    app: {{ $deploymentName }}
+    chart: {{ $root.Chart.Name }}-{{ $root.Chart.Version | replace "+" "_" }}
+    release: {{ $root.Release.Name }}
+    heritage: {{ $root.Release.Service }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ $settings.replicas | default 1 }}
   selector:
     matchLabels:
-      app: {{ template "fullname" . }}
+      app: {{ $deploymentName }}
   template:
     metadata:
       labels:
-        app: {{ template "fullname" . }}
-        release: {{ .Release.Name }}
+        app: {{ $deploymentName }}
+        release: {{ $root.Release.Name }}
       annotations:
-        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
-        {{- if .Values.registryCreds.gcrServiceAccountKey }}
-        checksum/secret-gcr: {{ include (print $.Template.BasePath "/secret-gcr.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") $root | sha256sum }}
+        {{- if $root.Values.registryCreds.gcrServiceAccountKey }}
+        checksum/secret-gcr: {{ include (print $.Template.BasePath "/secret-gcr.yaml") $root | sha256sum }}
         {{- end }}
-        {{- if .Values.registryCreds.dockerConfig }}
-        checksum/secret-registry: {{ include (print $.Template.BasePath "/secret-registry.yaml") . | sha256sum }}
+        {{- if $root.Values.registryCreds.dockerConfig }}
+        checksum/secret-registry: {{ include (print $.Template.BasePath "/secret-registry.yaml") $root | sha256sum }}
         {{- end }}
-        {{- if .Values.registryCreds.dockerconfigjson }}
-        checksum/secret-dockerconfigjson: {{ include (print $.Template.BasePath "/secret-dockerconfigjson.yaml") . | sha256sum }}
+        {{- if $root.Values.registryCreds.dockerconfigjson }}
+        checksum/secret-dockerconfigjson: {{ include (print $.Template.BasePath "/secret-dockerconfigjson.yaml") $root | sha256sum }}
         {{- end }}
-{{- with .Values.podAnnotations }}
+{{- with $root.Values.podAnnotations }}
 {{ toYaml . | indent 8 }}
 {{- end }}
     spec:
-      serviceAccount: {{ template "fullname" . }}
-      {{- if .Values.registryCreds.dockerconfigjson }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: "app"
+                  operator: In
+                  values:
+                  - {{ $deploymentName }}
+              topologyKey: "kubernetes.io/hostname"
+      serviceAccount: {{ template "fullname" $root }}
+      {{- if $root.Values.registryCreds.dockerconfigjson }}
       imagePullSecrets:
-      - name: {{ template "fullname" . }}-dockerconfigjson
+      - name: {{ template "fullname" $root }}-dockerconfigjson
       {{- end }}
-{{- if .Values.podInitContainers }}
       initContainers:
-{{ toYaml .Values.podInitContainers | nindent 8 }}
+        - name: priority-set
+          image: buildkite/agent:3.49-alpine-k8s
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+          env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: BUILDKITE_AGENT_TAGS
+            value: "{{ $tagsString }}"
+          volumeMounts:
+            - name: shared-volume
+              mountPath: "/var/buildkite"
+          command:
+            - /bin/sh
+            - -ex
+            - -c
+            - |
+              kubectl get pods -l app={{ $deploymentName }} --field-selector spec.nodeName=$NODE_NAME --no-headers=true > /var/buildkite/pods.log
+              pod_count=$(cat /var/buildkite/pods.log | wc -l)
+              priority=$((100 - pod_count))
+              echo "priority=$priority" > /var/buildkite/agent.cfg
+              echo "tags=$BUILDKITE_AGENT_TAGS,node=$NODE_NAME,priority=$priority" >> /var/buildkite/agent.cfg
+{{- if $root.Values.podInitContainers }}
+{{ toYaml $root.Values.podInitContainers | nindent 8 }}
 {{- end }}
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-{{- with .Values.securityContext }}
+        - name: {{ $root.Chart.Name }}
+          image: "{{ $root.Values.image.repository }}:{{ default $root.Chart.AppVersion $root.Values.image.tag }}"
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+
+{{- with $root.Values.securityContext }}
           securityContext:
 {{ toYaml . | indent 12 }}
 {{- end }}
           env:
             # BUILDKITE AGENT ENV VARS
-            {{- if .Values.agent.externalSecretName }}
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            {{- if $root.Values.agent.externalSecretName }}
             - name: BUILDKITE_AGENT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.agent.externalSecretName }}
-                  key: {{ .Values.agent.externalSecretTokenKey }}
-            {{- if .Values.agent.externalSecretSSHKey }}
+                  name: {{ $root.Values.agent.externalSecretName }}
+                  key: {{ $root.Values.agent.externalSecretTokenKey }}
+            {{- if $root.Values.agent.externalSecretSSHKey }}
             - name: SSH_PRIVATE_RSA_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.agent.externalSecretName }}
-                  key: {{ .Values.agent.externalSecretSSHKey }}
+                  name: {{ $root.Values.agent.externalSecretName }}
+                  key: {{ $root.Values.agent.externalSecretSSHKey }}
             {{- end }}
             {{- else }}
-            {{- if .Values.agent.token }}
+            {{- if $root.Values.agent.token }}
             - name: BUILDKITE_AGENT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "fullname" . }}
+                  name: {{ template "fullname" $root }}
                   key: agent-token
             {{- end }}
-            {{- if .Values.privateSshKey }}
+            {{- if $root.Values.privateSshKey }}
             - name: SSH_PRIVATE_RSA_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ template "fullname" . }}
+                  name: {{ template "fullname" $root }}
                   key: agent-ssh
             {{- end }}
             {{- end }}
-            - name: BUILDKITE_AGENT_TAGS
-              value: "{{ .Values.agent.tags }}"
-            {{- if .Values.dind.enabled }}
-            - name: DOCKER_HOST
-              value: "tcp://localhost:{{ .Values.dind.port | default "2375" }}"
+            - name: BUILDKITE_AGENT_CONFIG
+              value: "/var/buildkite/agent.cfg"
             - name: BUILDKITE_BUILD_PATH
               value: "/var/buildkite/builds"
             - name: BUILDKITE_PLUGINS_PATH
               value: "/var/buildkite/plugins"
             - name: BUILDKITE_HOOKS_PATH
               value: "/var/buildkite/hooks"
+            {{- if $root.Values.dindDaemonSet.enabled }}
+            - name: DOCKER_HOST
+              value: unix:///var/run/dind/docker.sock
+            {{- end }}
+            {{- if $root.Values.dind.enabled }}
+            - name: DOCKER_HOST
+              value: "tcp://localhost:{{ $root.Values.dind.port | default "2375" }}"
             {{- end }}
             # EXTRA BUILDKITE AGENT ENV VARS
-{{- if .Values.extraEnv }}
-{{ toYaml .Values.extraEnv | nindent 12 }}
+{{- if $root.Values.extraEnv }}
+{{ toYaml $root.Values.extraEnv | nindent 12 }}
 {{- end }}
-{{- if .Values.lifecycle.useDefault }}
-{{- if or .Values.lifecycle.preStop .Values.lifecycle.postStart }}
+{{- if $root.Values.lifecycle.useDefault }}
+{{- if or $root.Values.lifecycle.preStop $root.Values.lifecycle.postStart }}
 {{ fail "lifecycle.useDefault set to true, but lifecycle.preStop/lifecycle.postStart specified"}}
 {{- end }}
           # DEFAULT LIFECYCLE HOOK
@@ -108,113 +167,122 @@ spec:
                   - /bin/sh
                   - -c
                   - kill -s SIGTERM `/bin/pidof buildkite-agent` && while pidof -q buildkite-agent; do sleep 1; done
-{{- else if or .Values.lifecycle.preStop .Values.lifecycle.postStart }}
+{{- else if or $root.Values.lifecycle.preStop $root.Values.lifecycle.postStart }}
           lifecycle:
             # LIFECYCLE PRE STOP
-{{- if .Values.lifecycle.preStop }}
+{{- if $root.Values.lifecycle.preStop }}
             preStop:
-{{- toYaml .Values.lifecycle.preStop | nindent 14 }}
+{{- toYaml $root.Values.lifecycle.preStop | nindent 14 }}
 {{- end }}
             # LIFECYCLE POST START
-{{- if .Values.lifecycle.postStart }}
+{{- if $root.Values.lifecycle.postStart }}
             postStart:
-{{- toYaml .Values.lifecycle.postStart | nindent 14 }}
+{{- toYaml $root.Values.lifecycle.postStart | nindent 14 }}
 {{- end }}
 {{- end }}
           livenessProbe:
-{{ toYaml .Values.livenessProbe | indent 12 }}
+{{ toYaml $root.Values.livenessProbe | indent 12 }}
           resources:
-{{ toYaml .Values.resources | indent 12 }}
+{{ toYaml $root.Values.resources | indent 12 }}
           volumeMounts:
-{{- if .Values.volumeMounts }}{{ toYaml .Values.volumeMounts | nindent 12 }}{{- end }}
-{{- if .Values.enableHostDocker }}
+            - name: shared-volume
+              mountPath: "/var/buildkite"
+{{- if $root.Values.dindDaemonSet.enabled }}
+            - name: docker-socket
+              mountPath: /var/run/dind
+{{- end }}
+{{- if $root.Values.volumeMounts }}{{ toYaml $root.Values.volumeMounts | nindent 12 }}{{- end }}
+{{- if $root.Values.enableHostDocker }}
             - name: var-run-docker-sock
               mountPath: /var/run/docker.sock
 {{- end }}
-            {{- if .Values.registryCreds.gcrServiceAccountKey }}
+            {{- if $root.Values.registryCreds.gcrServiceAccountKey }}
             - name: service-key
               mountPath: /etc/service_key
             {{- end }}
-            {{- if .Values.registryCreds.dockerConfig }}
+            {{- if $root.Values.registryCreds.dockerConfig }}
             - name: docker-config
               mountPath: /root/.docker
             {{- end }}
-            {{- if .Values.dind.enabled }}
-            - name: shared-volume
-              mountPath: "/var/buildkite"
-            {{- end }}
-            {{- if .Values.entrypointd }}
+            {{- if $root.Values.entrypointd }}
             - name: entrypointd
               mountPath: /docker-entrypoint.d/
             {{- end }}
-{{- if .Values.dind.enabled }}
+{{- if $root.Values.dind.enabled }}
         - name: dind
-          image: {{ .Values.dind.image | default "docker:19.03-dind" }}
+          image: {{ $root.Values.dind.image | default "docker:19.03-dind" }}
           args:
             - "--mtu"
-            - "{{ .Values.dind.mtu | default "1500" }}"
+            - "{{ $root.Values.dind.mtu | default "1500" }}"
           securityContext:
             privileged: true
           env:
           - name: DOCKER_TLS_CERTDIR
             value: ""
           volumeMounts:
-            {{- if .Values.dind.volumeMounts }}{{ toYaml .Values.dind.volumeMounts | nindent 12 }}{{- end }}
+            {{- if $root.Values.dind.volumeMounts }}{{ toYaml $root.Values.dind.volumeMounts | nindent 12 }}{{- end }}
             - name: "docker-graph-storage"
               mountPath: "/var/lib/docker"
             - name: shared-volume
               mountPath: "/var/buildkite"
-            {{- if .Values.registryCreds.gcrServiceAccountKey }}
+            {{- if $root.Values.registryCreds.gcrServiceAccountKey }}
             - name: service-key
               mountPath: /etc/service_key
             {{- end }}
           resources:
-{{ toYaml .Values.dind.resources | indent 12 }}
+{{ toYaml $root.Values.dind.resources | indent 12 }}
 {{- end }}
-{{- if .Values.podContainers }}{{ toYaml .Values.podContainers | nindent 8 }}{{- end }}
-{{- with .Values.podSecurityContext }}
+{{- if $root.Values.podContainers }}{{ toYaml $root.Values.podContainers | nindent 8 }}{{- end }}
+{{- with $root.Values.podSecurityContext }}
       securityContext:
 {{ toYaml . | indent 8 }}
 {{- end }}
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $root.Values.terminationGracePeriodSeconds }}
       volumes:
-{{- if .Values.volumes }}{{ toYaml .Values.volumes | nindent 8 }}{{- end }}
-{{- if .Values.enableHostDocker }}
+        - name: shared-volume
+          emptyDir: {}
+{{- if $root.Values.dindDaemonSet.enabled }}
+        - name: docker-socket
+          hostPath:
+            path: /var/buildkite/docker/run
+{{- end}}
+{{- if $root.Values.volumes }}{{ toYaml $root.Values.volumes | nindent 8 }}{{- end }}
+{{- if $root.Values.enableHostDocker }}
         - name: var-run-docker-sock
           hostPath:
             path: /var/run/docker.sock
 {{- end }}
-        {{- if .Values.registryCreds.gcrServiceAccountKey }}
+        {{- if $root.Values.registryCreds.gcrServiceAccountKey }}
         - name: service-key
           secret:
-            secretName: {{ template "fullname" . }}-gcr
+            secretName: {{ template "fullname" $root }}-gcr
         {{- end }}
-        {{- if .Values.registryCreds.dockerConfig }}
+        {{- if $root.Values.registryCreds.dockerConfig }}
         - name: docker-config
           secret:
-            secretName: {{ template "fullname" . }}-registry
+            secretName: {{ template "fullname" $root }}-registry
         {{- end }}
-        {{- if .Values.dind.enabled }}
+        {{- if $root.Values.dind.enabled }}
         - name: docker-graph-storage
           emptyDir: {}
-        - name: shared-volume
-          emptyDir: {}
         {{- end }}
-        {{- if .Values.entrypointd }}
+        {{- if $root.Values.entrypointd }}
         - name: entrypointd
           configMap:
-            name: {{ template "fullname" . }}-entrypointd
+            name: {{ template "fullname" $root }}-entrypointd
             defaultMode: 0777
         {{- end }}
-    {{- if .Values.nodeSelector }}
+    {{- if $root.Values.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
+{{ toYaml $root.Values.nodeSelector | indent 8 }}
     {{- end }}
-    {{- if .Values.tolerations }}
+    {{- if $root.Values.tolerations }}
       tolerations:
-{{ toYaml .Values.tolerations | indent 8 }}
+{{ toYaml $root.Values.tolerations | indent 8 }}
     {{- end }}
-    {{- if .Values.affinity }}
+    {{- if $root.Values.affinity }}
       affinity:
-{{ toYaml .Values.affinity | indent 8 }}
+{{ toYaml $root.Values.affinity | indent 8 }}
     {{- end }}
+
+{{ end }}
