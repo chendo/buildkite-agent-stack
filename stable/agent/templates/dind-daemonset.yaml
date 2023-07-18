@@ -1,0 +1,54 @@
+{{- if .Values.dindDaemonSet.enabled }}
+apiVersion: {{ template "daemonset.apiVersion" . }}
+kind: DaemonSet
+metadata:
+  name: {{ template "fullname" . }}-dind
+  labels:
+    app: {{ template "fullname" . }}-dind
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "fullname" . }}-dind
+  template:
+    metadata:
+      labels:
+        app: {{ template "fullname" . }}-dind
+    spec:
+      initContainers:
+        - name: prep
+          image: alpine
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+          - name: docker-storage
+            mountPath: /var/buildkite/docker
+          command:
+            - /bin/sh
+            - -c
+            - mkdir -p /var/buildkite/docker/run              
+      containers:
+      - name: dind
+        image: {{ .Values.dindDaemonSet.image }}
+        args:
+          - "--data-root"
+          - "/var/buildkite/docker/storage"
+          - "--mtu"
+          - "{{ .Values.dindDaemonSet.mtu | default "1450" }}"          
+        resources:
+{{ toYaml .Values.dindDaemonSet.resources | indent 10 }}
+        env:
+        - name: DOCKER_HOST
+          value: unix:///var/buildkite/docker/run/docker.sock
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: docker-storage
+          mountPath: /var/buildkite/docker
+      volumes:
+      - name: docker-storage
+        hostPath:
+          path: /var/buildkite/docker
+          type: DirectoryOrCreate
+{{- end }}
