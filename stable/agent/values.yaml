@@ -115,47 +115,11 @@ rbac:
       - apiGroups:
           - ""
         resources:
-          - namespaces
-        verbs:
-          - watch
-          - list
-      - apiGroups:
-          - ""
-        resources:
-          - secrets
-        verbs:
-          - get
-          - watch
-          - list
-      - apiGroups:
-          - ""
-          - extensions
-          - apps
-          - batch
-        resources:
           - pods
-          - replicasets
-          - replicationcontrollers
-          - statefulsets
-          - deployments
-          - daemonsets
-          - jobs
-          - cronjobs
         verbs:
           - get
-          - delete
           - watch
           - list
-          - update
-      - apiGroups:
-          - ""
-        resources:
-          - configmaps
-          - secrets
-        verbs:
-          - get
-          - create
-          - update
 
 podDisruptionBudget:
   enabled: false
