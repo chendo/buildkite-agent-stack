@@ -12,5 +12,5 @@ spec:
 {{- end }}
   selector:
     matchLabels:
-      app: {{ template "name" . }}
+      app: {{ template "fullname" . }}
 {{- end }}

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ template "fullname" . }}
   labels:
-    app: {{ template "name" . }}
+    app: {{ template "fullname" . }}
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -11,11 +11,11 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ template "name" . }}
+      app: {{ template "fullname" . }}
   template:
     metadata:
       labels:
-        app: {{ template "name" . }}
+        app: {{ template "fullname" . }}
         release: {{ .Release.Name }}
       annotations:
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}

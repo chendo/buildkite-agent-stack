@@ -4,7 +4,7 @@ The {{ template "fullname" . }} is getting provisioned in your cluster. After a 
 
 To verify that {{ template "fullname" . }} has started, run:
 
-  kubectl --namespace={{ .Release.Namespace }} get pods -l "app={{ template "name" . }},release={{ .Release.Name }}"
+  kubectl --namespace={{ .Release.Namespace }} get pods -l "app={{ template "fullname" . }},release={{ .Release.Name }}"
 
 {{- else }}
 
