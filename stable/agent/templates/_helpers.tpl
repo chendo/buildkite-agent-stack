@@ -55,3 +55,14 @@ Define Pdb apiVersion
 {{- printf "policy/v1beta1" -}}
 {{- end }}
 {{- end }}
+
+{{- define "dictToTags" -}}
+{{- $first := true -}}
+{{- range $key, $value := . -}}
+{{- if $first -}}
+{{- $first = false -}}
+{{- else -}},
+{{- end -}}
+{{- printf "%s=%s" $key $value -}}
+{{- end }}
+{{- end }}
