@@ -21,7 +21,7 @@ agent:
   externalSecretSSHKey: ""
 
 # Enable mounting the hosts docker socket into the agent container
-enableHostDocker: true
+enableHostDocker: false
 
 # Enable security context configuration for the container
 securityContext: {}
