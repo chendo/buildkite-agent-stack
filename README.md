@@ -1,10 +1,10 @@
 # Buildkite Helm Charts Repository 
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Release](https://img.shields.io/github/release/buildkite/charts.svg?style=flat-square)](https://github.com/buildkite/charts/releases/latest)
-[![Build status](https://badge.buildkite.com/f0a51d12ea264f0cdbcbb70a6809019cc11a05580e72ff83ef.svg?branch=master)](https://buildkite.com/buildkite/helm-charts)
 
-The official [Buildkite](https://buildkite.com/docs/agent) [Helm](https://helm.sh) Charts repository.
+An unofficial and opinionated [Buildkite](https://buildkite.com/docs/agent) [Helm](https://helm.sh) Charts repository.
+
+Use this at your own risk etc.
 
 ## Getting Started
 
@@ -15,7 +15,7 @@ Get the latest [Helm release](https://github.com/kubernetes/helm#install).
 ### Add Buildkite Helm chart repository:
 
  ```console
- helm repo add buildkite https://buildkite.github.io/charts/
+ helm repo add buildkite-chendo https://github.com/chendo/buildkite-charts.git
  helm repo update
  ```
 
