@@ -16,6 +16,8 @@ agent:
   queues:
     default:
       replicas: 1
+      tags:
+        foo: bar
       # NOTE: these resources apply to the buildkite agent pod, not the DIND
       resources: {}
         # limits:
@@ -24,9 +26,11 @@ agent:
         # requests:
         #   cpu: 100m
         #   memory: 128Mi
+      nodeSelector: {}
 
   tags:
     role: kubernetes
+
   externalSecretName: ""
   externalSecretTokenKey: "agent-token"
   externalSecretSSHKey: ""
@@ -99,7 +103,7 @@ livenessProbe:
   #   - docker
   #   - ps
 
-nodeSelector: {}
+nodeSelector: null
 
 tolerations: []
 

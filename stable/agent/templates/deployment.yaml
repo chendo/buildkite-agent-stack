@@ -277,9 +277,9 @@ spec:
             name: {{ template "fullname" $root }}-entrypointd
             defaultMode: 0777
         {{- end }}
-    {{- if $root.Values.nodeSelector }}
+    {{- if or $root.Values.nodeSelector $settings.nodeSelector }}
       nodeSelector:
-{{ toYaml $root.Values.nodeSelector | indent 8 }}
+{{ toYaml (default $root.Values.nodeSelector $settings.nodeSelector) | indent 8 }}
     {{- end }}
     {{- if $root.Values.tolerations }}
       tolerations:
