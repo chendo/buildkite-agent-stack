@@ -89,7 +89,8 @@ spec:
               kubectl get pods -l app={{ $deploymentName }},pod-template-hash=$POD_TEMPLATE_HASH --field-selector spec.nodeName=$NODE_NAME --no-headers=true -o custom-columns=NAME:.metadata.name,CREATED:.metadata.creationTimestamp > /var/buildkite/pods.log
               pod_index=$(cat /var/buildkite/pods.log | awk "/$POD_NAME/{print NR; exit}")
               priority=$((100 - pod_index))
-              echo "name={{ $root.Values.agent.namePrefix }}$NODE_NAME-$QUEUE_NAME-%random" > /var/buildkite/agent.cfg
+              pod_suffix=${POD_NAME: -5}
+              echo "name={{ $root.Values.agent.namePrefix }}$NODE_NAME-$QUEUE_NAME-$pod_suffix" > /var/buildkite/agent.cfg
               echo "priority=$priority" >> /var/buildkite/agent.cfg
               echo "tags=$BUILDKITE_AGENT_TAGS,node=$NODE_NAME,priority=$priority" >> /var/buildkite/agent.cfg
 {{- if $root.Values.podInitContainers }}
