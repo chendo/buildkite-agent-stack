@@ -1,4 +1,5 @@
 {{- $root := . }}
+{{- $name := include "name" . }}
 {{- range $queue, $settings := $root.Values.agent.queues }}
 {{- $deploymentName := printf "%s-%s" (include "fullname" $root) $queue }}
 {{- $defaultTags := dict "queue" $queue }}
@@ -40,6 +41,9 @@ spec:
 {{ toYaml . | indent 8 }}
 {{- end }}
     spec:
+      {{- if $root.Values.priorities.enabled }}
+      priorityClassName: {{ $name }}-agent-default
+      {{- end }}
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:

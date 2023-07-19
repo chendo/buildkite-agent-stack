@@ -1,4 +1,5 @@
 {{- if .Values.dindDaemonSet.enabled }}
+{{ $name := include "name" . }}
 apiVersion: {{ template "daemonset.apiVersion" . }}
 kind: DaemonSet
 metadata:
@@ -17,6 +18,9 @@ spec:
       labels:
         app: {{ template "name" . }}-dind
     spec:
+      {{- if .Values.priorities.enabled }}
+      priorityClassName: {{ $name }}-dind
+      {{- end }}
       initContainers:
         - name: prep
           image: alpine

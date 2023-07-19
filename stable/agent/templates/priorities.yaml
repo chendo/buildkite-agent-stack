@@ -1,0 +1,14 @@
+{{- if .Values.priorities.enabled }}
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: {{ template "name" . }}-dind
+value: {{ .Values.priorities.dind | default 1000 }}
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: {{ template "name" . }}-agent-default
+value: {{ .Values.priorities.dind | default 100 }}
+{{- end }}
