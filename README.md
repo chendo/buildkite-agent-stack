@@ -6,21 +6,31 @@ An unofficial and opinionated [Buildkite](https://buildkite.com/docs/agent) [Hel
 
 The goal is to easily deploy and maintain an efficient set of Buildkite agents on Kubernetes.
 
-I'm aware [agent-stack-k8s](https://github.com/buildkite/agent-stack-k8s) exists, however the existing implementation does not appear to work with [docker-compose-buildkite-plugin](https://github.com/buildkite-plugins/docker-compose-buildkite-plugin), and making it efficient seems hard.
+## See also
+
+* Buildkite's official [agent-stack-k8s](https://github.com/buildkite/agent-stack-k8s)
+  * Current implementation does not appear to work with [docker-compose-buildkite-plugin](https://github.com/buildkite-plugins/docker-compose-buildkite-plugin)
+* Buildkite's official but deprecated [Helm charts](https://github.com/buildkite/charts), which this is forked from.
 
 ## Features
 
-* Deploy multiple queues with a single chart
-  * Supports Clusters
+* Deploy multiple sets of agents with a single chart, with per-set:
+  * queues
+  * nodeSelectors
+  * resources
+  * volumeMounts
+  * tags
 * Ability to deploy Docker in Docker as a `DaemonSet` to minimise overhead on building and moving images between agents
 * Spread agents evenly across nodes using pod anti-affinity
-* WIP: Spread Buildkite jobs evenly across nodes by using agent priority
+* Spread jobs evenly across nodes by using agent priority
+* Usability improvements:
+  * Agents have node=<node> tags
+  * Agent default name format: `[prefix]<node>-<queue>-<pod suffix>`  
 
 ## Roadmap / Ideas
 
 * Built-in registry pull-through cache
 * Docker image cleanup
-
 
 ## Getting Started
 
