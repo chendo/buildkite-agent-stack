@@ -1,6 +1,6 @@
 {{- $root := . }}
 {{- range $queue, $settings := $root.Values.agent.queues }}
-{{- $deploymentName := printf "%s-%s" (include "fullname" $root) $queue }}
+{{- $deploymentName := printf "%s-%s" (include "name" $root) $queue }}
 {{- $defaultTags := dict "queue" $queue }}
 {{- $tags := merge (default dict $settings.tags) $defaultTags $root.Values.agent.tags }}
 {{- $tagsString := include "dictToTags" $tags }}
@@ -145,7 +145,7 @@ spec:
               value: "/var/buildkite/hooks"
             {{- if $root.Values.dindDaemonSet.enabled }}
             - name: DOCKER_HOST
-              value: unix:///var/run/dind/docker.sock
+              value: unix:///var/run/docker/docker.sock
             {{- end }}
             {{- if $root.Values.dind.enabled }}
             - name: DOCKER_HOST
@@ -189,7 +189,7 @@ spec:
               mountPath: "/var/buildkite"
 {{- if $root.Values.dindDaemonSet.enabled }}
             - name: docker-socket
-              mountPath: /var/run/dind
+              mountPath: /var/run/docker
 {{- end }}
 {{- if $root.Values.volumeMounts }}{{ toYaml $root.Values.volumeMounts | nindent 12 }}{{- end }}
 {{- if $root.Values.enableHostDocker }}
