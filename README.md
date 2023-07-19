@@ -4,7 +4,13 @@
 
 An unofficial and opinionated [Buildkite](https://buildkite.com/docs/agent) [Helm](https://helm.sh) chart. Use this at your own risk etc. Support is best-effort.
 
-The goal is to easily deploy and maintain an efficient set of Buildkite agents on Kubernetes.
+## Goals
+
+* Turn-key deployment for docker-compose pipelines
+* Fast and efficient builds
+  * Minimise unnecessary overhead from duplicate work (builds, fetching, booting dependencies)
+  * Maximising use of compute
+    * Spread work across nodes
 
 ## See also
 
@@ -34,36 +40,9 @@ The goal is to easily deploy and maintain an efficient set of Buildkite agents o
 
 ## Getting Started
 
-### Install Helm
+More detailed instructions coming later.
 
-Get the latest [Helm release](https://github.com/kubernetes/helm#install).
-
-### Add Buildkite Helm chart repository:
-
- ```console
- helm repo add buildkite-agent-stack https://github.com/chendo/buildkite-agent-stack.git
- helm repo update
- ```
-
-### Install chart
-
-To install the Agent chart with the release name `bk-agent`:
-
-```console
-helm install --name bk-agent --namespace buildkite buildkite/agent --set agent.token="BUILDKITE_AGENT_TOKEN"
-```
-
-Check Agent chart [readme](stable/agent/README.md) for more customisation options.
-
-** You’ve now got Buildkite Agents running on your Kubernetes cluster! :tada: **
-
-## Contributing to Buildkite Charts
-
-Fork the `repo`, make changes and test it by installing the chart to see it is working. :)
-
-On success make a [pull request](https://help.github.com/articles/using-pull-requests) (PR).
-
-Upon successful review, someone will give the PR a __LGTM__ in the review thread.
+1. Use Helm to deploy to your cluster. See `values.yaml` and tweak accordingly
 
 ## Thanks :heart:
 
