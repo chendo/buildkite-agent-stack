@@ -4,6 +4,7 @@
 {{- $defaultTags := dict "queue" $queue }}
 {{- $tags := merge (default dict $settings.tags) $defaultTags $root.Values.agent.tags }}
 {{- $tagsString := include "dictToTags" $tags }}
+{{- $attachRegistryCreds := default dict $settings.attachRegistryCreds }}
 ---
 apiVersion: {{ template "deployment.apiVersion" $root }}
 kind: Deployment
@@ -52,7 +53,7 @@ spec:
                   - {{ $deploymentName }}
               topologyKey: "kubernetes.io/hostname"
       serviceAccount: {{ template "fullname" $root }}
-      {{- if $root.Values.registryCreds.dockerconfigjson }}
+      {{- if $attachRegistryCreds.dockerconfigjson }}
       imagePullSecrets:
       - name: {{ template "fullname" $root }}-dockerconfigjson
       {{- end }}
@@ -187,7 +188,7 @@ spec:
           livenessProbe:
 {{ toYaml $root.Values.livenessProbe | indent 12 }}
           resources:
-{{ toYaml $root.Values.resources | indent 12 }}
+{{ toYaml (default dict $settings.resources) | indent 12 }}
           volumeMounts:
             - name: shared-volume
               mountPath: "/var/buildkite"
@@ -195,16 +196,16 @@ spec:
             - name: docker-socket
               mountPath: /var/run/docker
 {{- end }}
-{{- if $root.Values.volumeMounts }}{{ toYaml $root.Values.volumeMounts | nindent 12 }}{{- end }}
+{{- if $settings.volumeMounts }}{{ toYaml $settings.volumeMounts | nindent 12 }}{{- end }}
 {{- if $root.Values.enableHostDocker }}
             - name: var-run-docker-sock
               mountPath: /var/run/docker.sock
 {{- end }}
-            {{- if $root.Values.registryCreds.gcrServiceAccountKey }}
+            {{- if $attachRegistryCreds.gcr }}
             - name: service-key
               mountPath: /etc/service_key
             {{- end }}
-            {{- if $root.Values.registryCreds.dockerConfig }}
+            {{- if $attachRegistryCreds.docker }}
             - name: docker-config
               mountPath: /root/.docker
             {{- end }}
@@ -229,7 +230,7 @@ spec:
               mountPath: "/var/lib/docker"
             - name: shared-volume
               mountPath: "/var/buildkite"
-            {{- if $root.Values.registryCreds.gcrServiceAccountKey }}
+            {{- if $attachRegistryCreds.gcr }}
             - name: service-key
               mountPath: /etc/service_key
             {{- end }}
@@ -250,18 +251,18 @@ spec:
           hostPath:
             path: /var/buildkite/docker/run
 {{- end}}
-{{- if $root.Values.volumes }}{{ toYaml $root.Values.volumes | nindent 8 }}{{- end }}
+{{- if $settings.volumes }}{{ toYaml $settings.volumes | nindent 8 }}{{- end }}
 {{- if $root.Values.enableHostDocker }}
         - name: var-run-docker-sock
           hostPath:
             path: /var/run/docker.sock
 {{- end }}
-        {{- if $root.Values.registryCreds.gcrServiceAccountKey }}
+        {{- if $attachRegistryCreds.gcr }}
         - name: service-key
           secret:
             secretName: {{ template "fullname" $root }}-gcr
         {{- end }}
-        {{- if $root.Values.registryCreds.dockerConfig }}
+        {{- if $attachRegistryCreds.docker }}
         - name: docker-config
           secret:
             secretName: {{ template "fullname" $root }}-registry
