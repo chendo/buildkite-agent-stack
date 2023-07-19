@@ -114,6 +114,20 @@ spec:
           securityContext:
 {{ toYaml . | indent 12 }}
 {{- end }}
+          ports:
+            - containerPort: 9999
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 9999
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 9999
+            initialDelaySeconds: 5
+            periodSeconds: 15
           env:
             # BUILDKITE AGENT ENV VARS
             - name: POD_NAME
@@ -161,6 +175,8 @@ spec:
               value: "/var/buildkite/plugins"
             - name: BUILDKITE_HOOKS_PATH
               value: "/var/buildkite/hooks"
+            - name: BUILDKITE_AGENT_HEALTH_CHECK_ADDR
+              value: "0.0.0.0:9999"
             {{- if $root.Values.dindDaemonSet.enabled }}
             - name: DOCKER_HOST
               value: unix:///var/run/docker/docker.sock
