@@ -65,6 +65,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
+          - name: POD_TEMPLATE_HASH
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.labels['pod-template-hash']
           - name: NODE_NAME
             valueFrom:
               fieldRef:
@@ -79,9 +83,9 @@ spec:
             - -ex
             - -c
             - |
-              kubectl get pods -l app={{ $deploymentName }} --field-selector spec.nodeName=$NODE_NAME --no-headers=true > /var/buildkite/pods.log
-              pod_count=$(cat /var/buildkite/pods.log | wc -l)
-              priority=$((100 - pod_count))
+              kubectl get pods -l app={{ $deploymentName }},pod-template-hash=$POD_TEMPLATE_HASH --field-selector spec.nodeName=$NODE_NAME --no-headers=true -o custom-columns=NAME:.metadata.name,CREATED:.metadata.creationTimestamp > /var/buildkite/pods.log
+              pod_index=$(cat /var/buildkite/pods.log | awk "/$POD_NAME/{print NR; exit}")
+              priority=$((100 - pod_index))
               echo "priority=$priority" > /var/buildkite/agent.cfg
               echo "tags=$BUILDKITE_AGENT_TAGS,node=$NODE_NAME,priority=$priority" >> /var/buildkite/agent.cfg
 {{- if $root.Values.podInitContainers }}
