@@ -28,9 +28,9 @@ An unofficial and opinionated [Buildkite](https://buildkite.com/docs/agent) [Hel
   * tags
 * Ability to deploy Docker in Docker as a `DaemonSet` to minimise overhead on building and moving images between agents
 * Spread agents evenly across nodes using pod anti-affinity
-* Spread jobs evenly across nodes by using agent priority
+* Spread jobs evenly across nodes by using agent `priority` by inverting pod indexes
 * Usability improvements:
-  * Agents have node=<node> tags
+  * Agents have `node=<node>` tags
   * Agent default name format: `[prefix]<node>-<queue>-<pod suffix>`  
 
 ## Roadmap / Ideas
