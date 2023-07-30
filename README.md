@@ -1,4 +1,6 @@
-# Buildkite Agent Stack
+# Buildkite Agent Swarm
+
+BEES for short: BuildkitE agEnt Swarm.
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
