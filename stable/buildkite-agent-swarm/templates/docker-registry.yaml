@@ -1,0 +1,71 @@
+{{- $registry := .Values.registry }}
+{{- if $registry.enabled }}
+{{- $release := include "name" . }}
+{{- $name := printf "%s-%s" $release "docker-registry"}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+spec:
+  replicas: 1
+  serviceName: registry
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+      - name: registry
+        image: {{ default $registry.image "registry:2" }}
+        imagePullPolicy: {{ default $registry.imagePullPolicy "IfNotPresent" }}
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - mountPath: /var/lib/registry
+          name: docker-registry-volume
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 2
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 5000
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          successThreshold: 2
+          timeoutSeconds: 2
+        resources:
+{{ toYaml $registry.resources | indent 10 }}
+      nodeSelector:
+{{ toYaml $registry.nodeSelector | indent 8 }}
+      volumes:
+        - name: docker-registry-volume
+          hostPath:
+            path: /data/docker-registry
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ $name }}
+  ports:
+  - name: registry
+    port: 5000
+    protocol: TCP
+    targetPort: 5000
+{{- end }}
