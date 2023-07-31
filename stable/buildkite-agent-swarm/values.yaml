@@ -20,7 +20,8 @@ agent:
       replicas: 1
       tags:
         foo: bar
-      basePriority: 50
+      basePriority: null
+      removeNodePrefix: null
       # NOTE: these resources apply to the buildkite agent pod, not the DIND
       resources: {}
         # limits:
@@ -34,7 +35,9 @@ agent:
   tags:
     role: kubernetes
 
-  basePriority: 100
+  basePriority: null
+
+  removeNodePrefix: null
 
   externalSecretName: ""
   externalSecretTokenKey: "agent-token"
