@@ -53,7 +53,7 @@ spec:
       volumes:
         - name: docker-registry-volume
           hostPath:
-            path: /data/docker-registry
+            path: /var/buildkite/docker-registry
 ---
 apiVersion: v1
 kind: Service
