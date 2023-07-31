@@ -6,6 +6,7 @@
 {{- $tags := merge (default dict $settings.tags) $defaultTags $root.Values.agent.tags }}
 {{- $tagsString := include "dictToTags" $tags }}
 {{- $attachRegistryCreds := default dict $settings.attachRegistryCreds }}
+{{- $basePriority := default "100" $settings.basePriority $root.Values.agent.basePriority}}
 ---
 apiVersion: {{ template "deployment.apiVersion" $root }}
 kind: Deployment
@@ -97,7 +98,7 @@ spec:
             - |
               kubectl get pods -l app={{ $deploymentName }},pod-template-hash=$POD_TEMPLATE_HASH --field-selector spec.nodeName=$NODE_NAME --sort-by=.metadata.creationTimestamp --no-headers=true -o custom-columns=NAME:.metadata.name,CREATED:.metadata.creationTimestamp > /var/buildkite/pods.log
               pod_index=$(cat /var/buildkite/pods.log | awk "/$POD_NAME/{print NR; exit}")
-              priority=$((100 - pod_index))
+              priority=$(({{ $basePriority }} - pod_index))
               pod_suffix=${POD_NAME: -5}
               echo "name={{ $root.Values.agent.namePrefix }}$NODE_NAME-$QUEUE_NAME-$pod_suffix" > /var/buildkite/agent.cfg
               echo "priority=$priority" >> /var/buildkite/agent.cfg
