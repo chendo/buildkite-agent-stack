@@ -71,13 +71,18 @@ spec:
           periodSeconds: 10          
       volumes:
       - name: docker-storage
+        {{- if .Values.dindDaemonSet.storage.tmpfs }}
+        emptyDir:
+          medium: Memory
+          sizeLimit: {{ .Values.dindDaemonSet.storage.sizeLimit | default "16Gi" }}
+        {{- else }}
         hostPath:
           path: /var/buildkite/docker
           type: DirectoryOrCreate
+        {{- end }}
       - name: docker-run
         hostPath:
           path: /var/buildkite/docker/run
           type: DirectoryOrCreate
-
 
 {{- end }}
