@@ -3,12 +3,12 @@
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
-  name: {{ template "name" . }}-dind
+  name: {{ template "fullname" . }}-dind
 value: {{ .Values.priorities.dind | default 1000 }}
 ---
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass
 metadata:
-  name: {{ template "name" . }}-agent-default
+  name: {{ template "fullname" . }}-agent-default
 value: {{ .Values.priorities.dind | default 100 }}
 {{- end }}

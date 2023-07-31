@@ -1,22 +1,22 @@
 {{- if .Values.dindDaemonSet.enabled }}
-{{ $name := include "name" . }}
+{{ $name := include "fullname" . }}
 apiVersion: {{ template "daemonset.apiVersion" . }}
 kind: DaemonSet
 metadata:
-  name: {{ template "name" . }}-dind
+  name: {{ $name }}-dind
   labels:
-    app: {{ template "name" . }}-dind
+    app: {{ $name }}-dind
     chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
   selector:
     matchLabels:
-      app: {{ template "name" . }}-dind
+      app: {{ $name }}-dind
   template:
     metadata:
       labels:
-        app: {{ template "name" . }}-dind
+        app: {{ $name }}-dind
     spec:
       {{- if .Values.priorities.enabled }}
       priorityClassName: {{ $name }}-dind

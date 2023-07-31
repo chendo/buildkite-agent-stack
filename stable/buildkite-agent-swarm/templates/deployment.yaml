@@ -1,5 +1,5 @@
 {{- $root := . }}
-{{- $name := include "name" . }}
+{{- $name := include "fullname" . }}
 {{- range $queue, $settings := $root.Values.agent.queues }}
 {{- $deploymentName := printf "%s-%s" (include "fullname" $root) $queue }}
 {{- $defaultTags := dict "queue" $queue }}
