@@ -1,27 +1,5 @@
 apiVersion: v1
 entries:
-  buildkite-agent-stack:
-  - apiVersion: v1
-    appVersion: 3.49.0
-    created: "2023-07-20T02:14:10.025270963Z"
-    description: Buildkite Agent Stack
-    digest: 1e378297456055221c3685cb313025fa7d222b06ad3839ae9fe47a47263030f2
-    home: https://github.com/chendo/buildkite-agent-stack
-    icon: https://buildkite.com/_next/static/assets/assets/images/brand-assets/buildkite-logo-portrait-on-light-61fc0230.png
-    keywords:
-    - kubernetes deployment
-    - helm release
-    - continuous deployment
-    - continuous integration
-    maintainers:
-    - email: chendo@users.noreply.github.com
-      name: chendo
-    name: buildkite-agent-stack
-    sources:
-    - https://github.com/chendo/buildkite-agent-stack
-    urls:
-    - https://chendo.github.io/buildkite-agent-stack/buildkite-agent-stack-0.1.0.tgz
-    version: 0.1.0
   buildkite-agent-swarm:
   - apiVersion: v1
     appVersion: 3.49.0
