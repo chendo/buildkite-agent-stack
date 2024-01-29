@@ -178,12 +178,30 @@ dind:
   volumeMounts: {}
 
 dindDaemonSet:
-  enabled: false
+  enabled: true
   image: docker:24.0-dind
   storage:
     tmpfs: false # use tmpfs / emptyDir, medium=Memory
     sizeLimit: 16Gi
   mtu: 1450
+  dockerConfig:
+    builder:
+      features:
+        buildkit: true
+      gc:
+        enabled: true
+        defaultKeepStorage: 20GB
+  args:
+    - '--insecure-registry'
+    - registry:5000
+    - '--max-concurrent-downloads'
+    - '100'
+    - '--max-concurrent-uploads'
+    - '100'
+    - '--log-driver'
+    - local
+    - '--log-opt'
+    - max-size=20m
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -199,6 +217,9 @@ dindDaemonSet:
 # Duration in seconds the pod needs to terminate gracefully.
 # May be increased to allow pipelines to complete successfully before the pod is terminated.
 terminationGracePeriodSeconds: 30
+
+priorities:
+  enabled: false
 
 # Control the lifecycle management for the deployment
 lifecycle:
